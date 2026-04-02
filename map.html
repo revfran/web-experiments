@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Iceland Map — Experiments</title>
+  <title>Mesones de Isuela Map — Experiments</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -57,7 +57,7 @@
 
   <main>
     <div class="map-hero">
-      <h1>Iceland</h1>
+      <h1>Mesones de Isuela</h1>
       <p>Interactive map powered by Leaflet.js and OpenStreetMap</p>
     </div>
 
@@ -76,16 +76,16 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([64.9631, -19.0208], 6);
+    const map = L.map('map').setView([41.797, -1.596], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 18,
     }).addTo(map);
 
-    L.marker([64.1355, -21.8954])
+    L.marker([41.797, -1.596])
       .addTo(map)
-      .bindPopup('<strong>Reykjavík</strong><br>Capital of Iceland')
+      .bindPopup('<strong>Mesones de Isuela</strong><br>Municipio de Zaragoza, España')
       .openPopup();
   </script>
 </body>
