@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iceland Map — Experiments</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    .map-hero {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+
+    .map-hero h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 0.3rem;
+    }
+
+    .map-hero p {
+      color: #777;
+      font-size: 0.9rem;
+    }
+
+    #map-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    #map {
+      width: 100%;
+      height: 540px;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .map-info {
+      margin-top: 1rem;
+      font-size: 0.82rem;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html">claude<span>experiments</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="weather.html">Weather</a>
+      <a href="map.html" class="active">Map</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="map-hero">
+      <h1>Iceland</h1>
+      <p>Interactive map powered by Leaflet.js and OpenStreetMap</p>
+    </div>
+
+    <div id="map-wrapper">
+      <div id="map"></div>
+      <p class="map-info">
+        Drag to pan &mdash; scroll or pinch to zoom &mdash;
+        map data &copy; <a href="https://www.openstreetmap.org/copyright" style="color:#7c3aed;">OpenStreetMap</a> contributors
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    Built with <a href="https://leafletjs.com/" style="color:#7c3aed;">Leaflet.js</a> &amp; <a href="https://www.openstreetmap.org/" style="color:#7c3aed;">OpenStreetMap</a>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([64.9631, -19.0208], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    L.marker([64.1355, -21.8954])
+      .addTo(map)
+      .bindPopup('<strong>Reykjavík</strong><br>Capital of Iceland')
+      .openPopup();
+  </script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zaragoza Weather — Experiments</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .weather-hero {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+
+    .weather-hero h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 0.3rem;
+    }
+
+    .weather-hero p {
+      color: #777;
+      font-size: 0.9rem;
+    }
+
+    #weather-container {
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .weather-main {
+      text-align: center;
+    }
+
+    .weather-icon {
+      font-size: 5rem;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .weather-temp {
+      font-size: 4rem;
+      font-weight: 800;
+      color: #111;
+      line-height: 1;
+    }
+
+    .weather-temp sup {
+      font-size: 1.8rem;
+      font-weight: 400;
+      color: #555;
+      vertical-align: super;
+    }
+
+    .weather-desc {
+      font-size: 1.15rem;
+      color: #555;
+      margin: 0.5rem 0 1.5rem;
+      text-transform: capitalize;
+    }
+
+    .weather-feels {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 1.5rem;
+    }
+
+    .weather-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .weather-stat {
+      background: #f8f7ff;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .weather-stat .stat-label {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+    }
+
+    .weather-stat .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .weather-stat .stat-unit {
+      font-size: 0.8rem;
+      color: #777;
+      font-weight: 400;
+    }
+
+    .weather-updated {
+      text-align: center;
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 1.5rem;
+    }
+
+    #loading {
+      text-align: center;
+      padding: 3rem;
+      color: #888;
+      font-size: 1rem;
+    }
+
+    #error-msg {
+      display: none;
+      background: #fff0f0;
+      color: #c0392b;
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html">claude<span>experiments</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="weather.html" class="active">Weather</a>
+      <a href="map.html">Map</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="weather-hero">
+      <h1>Zaragoza, Spain</h1>
+      <p>Current weather conditions &mdash; updated live</p>
+    </div>
+
+    <div id="weather-container">
+      <div id="loading">Fetching weather data...</div>
+      <div id="error-msg">Could not load weather data. Please try again later.</div>
+
+      <div id="weather-display" style="display:none">
+        <div class="card weather-main">
+          <div class="weather-icon" id="w-icon"></div>
+          <div class="weather-temp" id="w-temp"></div>
+          <div class="weather-desc" id="w-desc"></div>
+          <div class="weather-feels" id="w-feels"></div>
+
+          <div class="weather-grid">
+            <div class="weather-stat">
+              <div class="stat-label">Humidity</div>
+              <div class="stat-value" id="w-humidity">—<span class="stat-unit">%</span></div>
+            </div>
+            <div class="weather-stat">
+              <div class="stat-label">Wind</div>
+              <div class="stat-value" id="w-wind">—<span class="stat-unit"> km/h</span></div>
+            </div>
+            <div class="weather-stat">
+              <div class="stat-label">Direction</div>
+              <div class="stat-value" id="w-dir">—</div>
+            </div>
+          </div>
+
+          <div class="weather-updated" id="w-updated"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Weather data from <a href="https://open-meteo.com/" style="color:#7c3aed;">Open-Meteo</a> &mdash; free &amp; no API key required
+  </footer>
+
+  <script>
+    const WMO_CODES = {
+      0:  { label: 'Clear sky',            icon: '☀️' },
+      1:  { label: 'Mainly clear',         icon: '🌤️' },
+      2:  { label: 'Partly cloudy',        icon: '⛅' },
+      3:  { label: 'Overcast',             icon: '☁️' },
+      45: { label: 'Foggy',               icon: '🌫️' },
+      48: { label: 'Icy fog',             icon: '🌫️' },
+      51: { label: 'Light drizzle',        icon: '🌦️' },
+      53: { label: 'Moderate drizzle',     icon: '🌦️' },
+      55: { label: 'Dense drizzle',        icon: '🌧️' },
+      61: { label: 'Slight rain',          icon: '🌧️' },
+      63: { label: 'Moderate rain',        icon: '🌧️' },
+      65: { label: 'Heavy rain',           icon: '🌧️' },
+      71: { label: 'Slight snow',          icon: '🌨️' },
+      73: { label: 'Moderate snow',        icon: '🌨️' },
+      75: { label: 'Heavy snow',           icon: '❄️' },
+      77: { label: 'Snow grains',          icon: '🌨️' },
+      80: { label: 'Slight showers',       icon: '🌦️' },
+      81: { label: 'Moderate showers',     icon: '🌧️' },
+      82: { label: 'Violent showers',      icon: '⛈️' },
+      85: { label: 'Slight snow showers',  icon: '🌨️' },
+      86: { label: 'Heavy snow showers',   icon: '❄️' },
+      95: { label: 'Thunderstorm',         icon: '⛈️' },
+      96: { label: 'Thunderstorm w/ hail', icon: '⛈️' },
+      99: { label: 'Thunderstorm w/ hail', icon: '⛈️' },
+    };
+
+    function windDirection(deg) {
+      const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+      return dirs[Math.round(deg / 45) % 8];
+    }
+
+    async function loadWeather() {
+      const url =
+        'https://api.open-meteo.com/v1/forecast' +
+        '?latitude=41.6488&longitude=-0.8891' +
+        '&current=temperature_2m,relative_humidity_2m,apparent_temperature,' +
+        'weather_code,wind_speed_10m,wind_direction_10m' +
+        '&wind_speed_unit=kmh&timezone=Europe%2FMadrid';
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+        const c = data.current;
+
+        const wmo = WMO_CODES[c.weather_code] || { label: 'Unknown', icon: '🌡️' };
+
+        document.getElementById('w-icon').textContent = wmo.icon;
+        document.getElementById('w-temp').innerHTML =
+          `${Math.round(c.temperature_2m)}<sup>°C</sup>`;
+        document.getElementById('w-desc').textContent = wmo.label;
+        document.getElementById('w-feels').textContent =
+          `Feels like ${Math.round(c.apparent_temperature)}°C`;
+        document.getElementById('w-humidity').innerHTML =
+          `${c.relative_humidity_2m}<span class="stat-unit">%</span>`;
+        document.getElementById('w-wind').innerHTML =
+          `${Math.round(c.wind_speed_10m)}<span class="stat-unit"> km/h</span>`;
+        document.getElementById('w-dir').textContent =
+          windDirection(c.wind_direction_10m);
+
+        const updated = new Date(c.time);
+        document.getElementById('w-updated').textContent =
+          `Last updated: ${updated.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('weather-display').style.display = 'block';
+      } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error-msg').style.display = 'block';
+        console.error(err);
+      }
+    }
+
+    loadWeather();
+  </script>
+</body>
+</html>

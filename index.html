@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Code Experiments</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .hero {
+      text-align: center;
+      padding: 4rem 2rem 3rem;
+    }
+
+    .hero .badge {
+      display: inline-block;
+      background: #ede9fe;
+      color: #6d28d9;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 99px;
+      margin-bottom: 1.2rem;
+    }
+
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      color: #111;
+    }
+
+    .hero h1 span {
+      color: #7c3aed;
+    }
+
+    .hero p {
+      font-size: 1.1rem;
+      color: #555;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    .experiments-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.2rem;
+      margin-top: 2.5rem;
+    }
+
+    .experiment-card {
+      background: white;
+      border-radius: 14px;
+      padding: 1.8rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: 2px solid transparent;
+    }
+
+    .experiment-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.12);
+      border-color: #ede9fe;
+    }
+
+    .experiment-card .icon {
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .experiment-card h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: #111;
+    }
+
+    .experiment-card p {
+      font-size: 0.9rem;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .experiment-card .tag {
+      display: inline-block;
+      background: #f3f4f6;
+      color: #555;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 99px;
+      margin-top: 0.9rem;
+    }
+
+    .about-card {
+      margin-top: 2rem;
+      border-left: 4px solid #7c3aed;
+    }
+
+    .about-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #111;
+    }
+
+    .about-card p {
+      font-size: 0.9rem;
+      color: #555;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html">claude<span>experiments</span></a>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="weather.html">Weather</a>
+      <a href="map.html">Map</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="badge">Built with Claude Code</div>
+      <h1>A playground for<br /><span>small experiments</span></h1>
+      <p>
+        This is a personal space to explore ideas, test APIs, and build
+        tiny interactive things — all generated using
+        <strong>Claude Code</strong>.
+      </p>
+    </div>
+
+    <div class="experiments-grid">
+      <a class="experiment-card" href="weather.html">
+        <div class="icon">🌤️</div>
+        <h2>Zaragoza Weather</h2>
+        <p>Live weather conditions for Zaragoza, Spain — powered by the Open-Meteo API.</p>
+        <span class="tag">Open-Meteo API</span>
+      </a>
+
+      <a class="experiment-card" href="map.html">
+        <div class="icon">🗺️</div>
+        <h2>Iceland Explorer</h2>
+        <p>An interactive map centered on Iceland, built with Leaflet.js and OpenStreetMap tiles.</p>
+        <span class="tag">Leaflet.js · OpenStreetMap</span>
+      </a>
+    </div>
+
+    <div class="card about-card">
+      <h3>What is this?</h3>
+      <p>
+        Every experiment on this site was created through a conversation with
+        <a href="https://claude.ai/code" style="color:#7c3aed;">Claude Code</a>.
+        No boilerplate, no templates — just prompts and results. It's a way to
+        see what can be built quickly and to keep a record of what works.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    Made with Claude Code &mdash; experiments are free to break
+  </footer>
+</body>
+</html>
