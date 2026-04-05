@@ -1,0 +1,26 @@
+name: Orchestrator Review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    name: Code Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run orchestrator review
+        id: review
+        uses: revfran/claude-agent-orchestrator@main
+        with:
+          focus: "general"
+          # Uncomment and add the secret to enable AI-powered reviews:
+          # anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
