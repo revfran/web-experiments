@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>News | Claude Experiments</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .hn-wrap {
+      font-family: Verdana, Geneva, sans-serif;
+    }
+
+    .hn-intro {
+      font-size: 0.82rem;
+      color: #666;
+      margin-bottom: 1.8rem;
+      line-height: 1.6;
+    }
+
+    .hn-updated {
+      font-size: 0.72rem;
+      color: #aaa;
+      margin-top: 0.4rem;
+    }
+
+    .hn-section {
+      background: #f6f6ef;
+      border: 1px solid #d6d0c4;
+      border-radius: 6px;
+      margin-bottom: 1.8rem;
+      overflow: hidden;
+    }
+
+    .hn-section-header {
+      background: #ff6600;
+      color: white;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .hn-list {
+      list-style: none;
+      padding: 0.4rem 0;
+    }
+
+    .hn-item {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding: 0.35rem 0.9rem;
+      border-bottom: 1px solid #eeeedf;
+    }
+
+    .hn-item:last-child {
+      border-bottom: none;
+    }
+
+    .hn-num {
+      color: #b0a899;
+      font-size: 0.72rem;
+      min-width: 1.5rem;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .hn-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .hn-title {
+      color: #000;
+      font-size: 0.82rem;
+      text-decoration: none;
+      line-height: 1.45;
+      display: block;
+    }
+
+    .hn-title:hover {
+      color: #ff6600;
+      text-decoration: underline;
+    }
+
+    .hn-meta {
+      font-size: 0.68rem;
+      color: #999;
+      margin-top: 0.12rem;
+    }
+
+    .hn-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      font-size: 0.82rem;
+      color: #999;
+      font-family: Verdana, Geneva, sans-serif;
+    }
+
+    .hn-state.error {
+      color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="index.html">claude<span>experiments</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="weather.html">Weather</a>
+      <a href="map.html">Map</a>
+      <a href="news.html" class="active">News</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hn-wrap">
+      <div class="hn-intro">
+        Headlines scraped daily from RSS feeds — Zaragoza local news, tennis, and videogames.
+        <div class="hn-updated" id="updated-label"></div>
+      </div>
+      <div id="news-root"><div class="hn-state">Loading...</div></div>
+    </div>
+  </main>
+
+  <footer>
+    Made with Claude Code &mdash; experiments are free to break
+  </footer>
+
+  <script>
+    const SECTIONS = [
+      { key: 'zaragoza', label: 'Zaragoza' },
+      { key: 'tennis',   label: 'Tennis' },
+      { key: 'videogames', label: 'Videogames' },
+    ];
+
+    const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, (c) => ESC[c]);
+    }
+
+    function safeHref(url) {
+      try {
+        const { protocol } = new URL(url);
+        return (protocol === 'https:' || protocol === 'http:') ? url : '#';
+      } catch {
+        return '#';
+      }
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      try {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
+          day: 'numeric', month: 'short', year: 'numeric'
+        });
+      } catch {
+        return '';
+      }
+    }
+
+    function renderSection(label, items) {
+      if (!items || items.length === 0) {
+        return `<section class="hn-section">
+          <div class="hn-section-header">${escapeHtml(label)}</div>
+          <div class="hn-state">No items available.</div>
+        </section>`;
+      }
+      const rows = items.map((item, i) => `
+        <li class="hn-item">
+          <span class="hn-num">${i + 1}.</span>
+          <div class="hn-content">
+            <a class="hn-title" href="${escapeHtml(safeHref(item.link))}" target="_blank" rel="noopener noreferrer">
+              ${escapeHtml(item.title)}
+            </a>
+            <div class="hn-meta">${escapeHtml(item.source)}${item.date ? ' &mdash; ' + escapeHtml(formatDate(item.date)) : ''}</div>
+          </div>
+        </li>`).join('');
+      return `<section class="hn-section">
+        <div class="hn-section-header">${escapeHtml(label)}</div>
+        <ol class="hn-list">${rows}</ol>
+      </section>`;
+    }
+
+    fetch('news-data.json')
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        if (data.updated) {
+          document.getElementById('updated-label').textContent =
+            'Last updated: ' + new Date(data.updated).toLocaleString('en-GB');
+        }
+        const html = SECTIONS.map(({ key, label }) =>
+          renderSection(label, data[key])
+        ).join('');
+        document.getElementById('news-root').innerHTML = html;
+      })
+      .catch((err) => {
+        document.getElementById('news-root').innerHTML =
+          `<div class="hn-state error">Could not load news. Run <code>node scripts/fetch-news.mjs</code> locally first.<br><small>${err.message}</small></div>`;
+      });
+  </script>
+</body>
+</html>

@@ -5,9 +5,11 @@
     "serve": "node server.js",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "fetch-news": "node scripts/fetch-news.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "^1.44.0"
+    "@playwright/test": "^1.44.0",
+    "rss-parser": "^3.13.0"
   }
 }
