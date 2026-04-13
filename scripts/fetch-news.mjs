@@ -1,4 +1,5 @@
 import Parser from 'rss-parser';
+import Anthropic from '@anthropic-ai/sdk';
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -9,6 +10,14 @@ const parser = new Parser({
   timeout: 15000,
   headers: { 'User-Agent': 'web-experiments-news-bot/1.0' },
 });
+
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic()
+  : null;
+
+if (!anthropic) {
+  console.warn('ANTHROPIC_API_KEY not set — summaries will be skipped.');
+}
 
 // Each section lists feeds in priority order. Items are collected from each
 // feed in turn until `count` is reached (or all feeds are exhausted).
@@ -49,7 +58,33 @@ async function fetchFeed(url) {
     link: item.link ?? item.guid ?? '',
     source,
     date: item.pubDate ?? item.isoDate ?? '',
+    // capture text content for summary generation; trimmed to 2000 chars
+    _description: (item.contentSnippet ?? item.summary ?? '').slice(0, 2000),
   }));
+}
+
+async function generateSummary(item) {
+  const input = item._description
+    ? `Title: ${item.title}\n\nContent:\n${item._description}`
+    : `Title: ${item.title}`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 600,
+      messages: [{
+        role: 'user',
+        content:
+          'Summarize this news article in up to 400 words. ' +
+          'Write in clear, plain prose — no bullet points or markdown formatting. ' +
+          'End with a complete sentence.\n\n' + input,
+      }],
+    });
+    return message.content[0].text.trim();
+  } catch (err) {
+    console.error(`  ✗ Summary failed for "${item.title}": ${err.message}`);
+    return null;
+  }
 }
 
 async function fetchSection({ category, count, feeds }) {
@@ -75,7 +110,16 @@ async function fetchSection({ category, count, feeds }) {
   }
 
   console.log(`[${category}] done — ${collected.length} items`);
-  return collected;
+
+  if (anthropic) {
+    console.log(`[${category}] generating summaries...`);
+    for (const item of collected) {
+      item.summary = await generateSummary(item);
+    }
+  }
+
+  // strip internal field before writing
+  return collected.map(({ _description, ...rest }) => rest);
 }
 
 const data = { updated: new Date().toISOString() };

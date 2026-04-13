@@ -9,6 +9,7 @@
     "fetch-news": "node scripts/fetch-news.mjs"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.37.0",
     "@playwright/test": "^1.44.0",
     "rss-parser": "^3.13.0"
   }
