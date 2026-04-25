@@ -83,17 +83,20 @@ jobs:
             const lines = [MARKER, '## Page Screenshots', ''];
             for (const file of files) {
               const content = fs.readFileSync(path.join(dir, file));
+              const formData = new FormData();
+              formData.append('data', new Blob([content], { type: 'image/png' }), file);
               const res = await fetch(
                 `https://uploads.github.com/repos/${owner}/${repo}/issues/${prNumber}/assets?name=${encodeURIComponent(file)}`,
                 {
                   method: 'POST',
                   headers: {
                     Authorization: `Bearer ${token}`,
-                    'Content-Type': 'image/png',
                     Accept: 'application/vnd.github+json',
                     'X-GitHub-Api-Version': '2022-11-28',
+                    // Content-Type is intentionally omitted — fetch sets it
+                    // automatically with the multipart boundary when using FormData
                   },
-                  body: content,
+                  body: formData,
                 }
               );
               if (res.ok) {
