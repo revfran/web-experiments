@@ -79,24 +79,39 @@ jobs:
             const prNumber = context.issue.number;
             const token = process.env.GITHUB_TOKEN;
 
-            // Upload each PNG to GitHub's CDN via the issue assets API
+            // Upload each PNG to GitHub's CDN via the issue assets API.
+            // Build the multipart body manually so Content-Length is exact —
+            // Node's native FormData omits it, which causes GitHub to reject
+            // the request with "Bad Size".
             const lines = [MARKER, '## Page Screenshots', ''];
             for (const file of files) {
-              const content = fs.readFileSync(path.join(dir, file));
-              const formData = new FormData();
-              formData.append('data', new Blob([content], { type: 'image/png' }), file);
+              const filePath = path.join(dir, file);
+              const content = fs.readFileSync(filePath);
+              if (content.length === 0) {
+                console.log(`Skipping ${file} (empty)`);
+                continue;
+              }
+              const boundary = `----Boundary${Date.now()}`;
+              const head = Buffer.from(
+                `--${boundary}\r\n` +
+                `Content-Disposition: form-data; name="data"; filename="${file}"\r\n` +
+                `Content-Type: image/png\r\n\r\n`
+              );
+              const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
+              const body = Buffer.concat([head, content, tail]);
+
               const res = await fetch(
                 `https://uploads.github.com/repos/${owner}/${repo}/issues/${prNumber}/assets?name=${encodeURIComponent(file)}`,
                 {
                   method: 'POST',
                   headers: {
                     Authorization: `Bearer ${token}`,
+                    'Content-Type': `multipart/form-data; boundary=${boundary}`,
+                    'Content-Length': String(body.length),
                     Accept: 'application/vnd.github+json',
                     'X-GitHub-Api-Version': '2022-11-28',
-                    // Content-Type is intentionally omitted — fetch sets it
-                    // automatically with the multipart boundary when using FormData
                   },
-                  body: formData,
+                  body,
                 }
               );
               if (res.ok) {
