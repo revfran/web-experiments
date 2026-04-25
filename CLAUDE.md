@@ -2,47 +2,62 @@
 
 ## Project
 
-Static site served on GitHub Pages (`revfran/web-experiments`). No build step — the HTML/CSS files at the root are served directly. Do not introduce a build tool or move files out of the root.
+Static site on GitHub Pages (`revfran/web-experiments`). **No build step** — HTML/CSS files at the root are served directly. Do not add a framework, bundler, or move files out of the root.
 
-## Commands
+## Quick start
 
 ```bash
-npm run serve        # start local server at http://localhost:3000
-npm test             # run Playwright tests (starts server automatically)
-npm run test:ui      # Playwright UI mode
+nvm use          # Node 20 (required)
+npm run serve    # http://localhost:3000
+npm test         # Playwright tests (server starts automatically)
 ```
 
-Node version: 20 (see `.nvmrc`). Run `nvm use` before anything else.
+## Pages & data files
+
+| Page | Data file | Updated by |
+|---|---|---|
+| `index.html` | — | static |
+| `weather.html` | open-meteo API (live) | — |
+| `map.html` | — | static |
+| `news.html` | `news-data.json` *(gitignored)* | `update-daily.yml` daily |
+| `ing.html` | `ing-plan-data.json` *(committed)* | `update-daily.yml` daily |
 
 ## Structure
 
 ```
-/                    # static site root (served as-is by GitHub Pages)
-  index.html
-  weather.html
-  map.html
-  style.css
-server.js            # plain Node http server, no framework, serves the root
-playwright.config.js # testDir: tests/specs, baseURL: http://localhost:3000
+/                        static root
+  *.html / style.css
+  ing-plan-data.json     committed; updated by ING workflow
+scripts/
+  fetch-news.mjs         RSS → news-data.json  (needs ANTHROPIC_API_KEY for summaries)
+  check-ing-plan.mjs     Playwright → ing-plan-data.json
+server.js                plain Node static server
+playwright.config.js     testDir: tests/specs, reporter: html
 tests/
-  pages/             # page objects — one per HTML page, all extend BasePage
-  specs/             # one spec file per HTML page
+  pages/                 page objects extending BasePage
+  specs/                 one spec per page + screenshots.spec.js
 .github/workflows/
-  deploy.yml         # test → deploy pipeline
+  deploy.yml             push/PR → test → deploy
+  update-daily.yml       daily 06:00 UTC → fetch RSS + check ING → deploy
 ```
 
 ## Testing conventions
 
-- One page object per HTML page, extending `BasePage` (shared nav/header/footer locators).
-- Route interception uses **regex**, not glob — e.g. `/open-meteo\.com/` not `**/open-meteo.com/**`.
-- The `webServer` in `playwright.config.js` starts `server.js` automatically; no need to start it manually before running tests.
+- One page object per HTML page, all extend `BasePage`.
+- Route interception uses **regex**: `/open-meteo\.com/`, `/\/news-data\.json/`, `/\/ing-plan-data\.json/`.
+- `screenshots.spec.js` takes full-page desktop screenshots of every page with mocked data and attaches them to the Playwright HTML report.
 
-## Deployment
+## Workflows & deployment
 
-Merges to `main` run tests and deploy to GitHub Pages via `actions/deploy-pages`. The Pages source in repo settings must be set to **GitHub Actions**, not branch.
+- `deploy.yml` runs on every push/PR to `main`: tests → deploy.
+- `update-daily.yml` runs both data steps with `continue-on-error: true`; if news fetch fails, the staging step falls back to the live Pages URL. Either failure is isolated — the deploy still runs.
+- `deploy.yml` posts screenshots as an embedded PR comment via GitHub's issue assets CDN (requires `pull-requests: write`).
+- Pages source in repo settings must be **GitHub Actions**, not branch.
+- `ANTHROPIC_API_KEY` secret needed for AI news summaries.
 
-## What to avoid
+## Hard rules
 
-- Do not add a framework or bundler.
-- Do not move HTML files into a subdirectory — GitHub Pages serves from the root.
-- Do not add `node_modules` to git (it is gitignored via the standard Node `.gitignore`).
+- No framework or bundler.
+- HTML files stay at the root.
+- `news-data.json` is gitignored — never commit it.
+- `node_modules` is gitignored — never commit it.

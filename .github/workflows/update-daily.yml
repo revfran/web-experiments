@@ -1,8 +1,8 @@
-name: ING Plan Amigo Check
+name: Daily Update
 
 on:
   schedule:
-    - cron: '0 7 * * 1'   # 7:00 AM UTC every Monday
+    - cron: '0 6 * * *'   # 6:00 AM UTC every day
   workflow_dispatch:       # allow manual trigger from GitHub UI
 
 permissions:
@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  check-and-deploy:
-    name: Check plan status & deploy
+  update-and-deploy:
+    name: Fetch data & deploy
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -36,14 +36,29 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
+      - name: Fetch news from RSS feeds
+        run: node scripts/fetch-news.mjs
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
       - name: Check ING Plan Amigo status
         run: node scripts/check-ing-plan.mjs
+        continue-on-error: true
 
       - uses: actions/configure-pages@v4
 
       - name: Stage static files
         run: |
           mkdir -p _site
+          # news-data.json is gitignored; fall back to the live site if the
+          # news fetch step failed (continue-on-error keeps the job running).
+          if [ ! -f news-data.json ]; then
+            curl -sf \
+              "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/news-data.json" \
+              -o news-data.json \
+              || echo '{"updated":null,"zaragoza":[],"tennis":[],"videogames":[]}' > news-data.json
+          fi
           cp index.html weather.html map.html news.html ing.html style.css _site/
           cp news-data.json ing-plan-data.json _site/
 
