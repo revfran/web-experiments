@@ -10,6 +10,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: write
 
 concurrency:
   group: pages
@@ -51,6 +52,78 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+      - name: Post screenshots to PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const MARKER = '<!-- pw-screenshots -->';
+            const dir = 'test-screenshots';
+
+            if (!fs.existsSync(dir)) {
+              console.log('No screenshot directory found, skipping comment');
+              return;
+            }
+
+            const files = fs.readdirSync(dir).filter(f => f.endsWith('.png')).sort();
+            if (!files.length) {
+              console.log('No screenshots found, skipping comment');
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const prNumber = context.issue.number;
+            const token = process.env.GITHUB_TOKEN;
+
+            // Upload each PNG to GitHub's CDN via the issue assets API
+            const lines = [MARKER, '## Page Screenshots', ''];
+            for (const file of files) {
+              const content = fs.readFileSync(path.join(dir, file));
+              const res = await fetch(
+                `https://uploads.github.com/repos/${owner}/${repo}/issues/${prNumber}/assets?name=${encodeURIComponent(file)}`,
+                {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'image/png',
+                    Accept: 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2022-11-28',
+                  },
+                  body: content,
+                }
+              );
+              if (res.ok) {
+                const data = await res.json();
+                const label = file.replace(/^\d+-/, '').replace('.png', '');
+                lines.push(`**${label}**`, `![${label}](${data.url})`, '');
+              } else {
+                console.error(`Failed to upload ${file}: ${res.status} ${await res.text()}`);
+              }
+            }
+
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            lines.push(`*Captured at ${context.sha.slice(0, 7)} · [Full Playwright report](${runUrl})*`);
+            const body = lines.join('\n');
+
+            // Update existing comment if present, otherwise create a new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: prNumber,
+            });
+            const existing = comments.find(c => c.body.startsWith(MARKER));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: prNumber, body,
+              });
+            }
 
   deploy:
     name: Deploy to GitHub Pages
