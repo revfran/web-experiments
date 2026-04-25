@@ -19,8 +19,8 @@ npm test         # Playwright tests (server starts automatically)
 | `index.html` | — | static |
 | `weather.html` | open-meteo API (live) | — |
 | `map.html` | — | static |
-| `news.html` | `news-data.json` *(gitignored)* | `update-news.yml` daily |
-| `ing.html` | `ing-plan-data.json` *(committed)* | `check-ing-plan.yml` weekly |
+| `news.html` | `news-data.json` *(gitignored)* | `update-daily.yml` daily |
+| `ing.html` | `ing-plan-data.json` *(committed)* | `update-daily.yml` daily |
 
 ## Structure
 
@@ -38,8 +38,7 @@ tests/
   specs/                 one spec per page + screenshots.spec.js
 .github/workflows/
   deploy.yml             push/PR → test → deploy
-  update-news.yml        daily 06:00 UTC → fetch RSS → deploy
-  check-ing-plan.yml     Monday 07:00 UTC → check ING page → deploy
+  update-daily.yml       daily 06:00 UTC → fetch RSS + check ING → deploy
 ```
 
 ## Testing conventions
@@ -51,10 +50,10 @@ tests/
 ## Workflows & deployment
 
 - `deploy.yml` runs on every push/PR to `main`: tests → deploy.
-- The two data workflows each fetch the other's data file from the live Pages URL before staging, so neither wipes the other's content.
+- `update-daily.yml` runs both data steps with `continue-on-error: true`; if news fetch fails, the staging step falls back to the live Pages URL. Either failure is isolated — the deploy still runs.
 - `deploy.yml` posts screenshots as an embedded PR comment via GitHub's issue assets CDN (requires `pull-requests: write`).
 - Pages source in repo settings must be **GitHub Actions**, not branch.
-- `ANTHROPIC_API_KEY` secret needed for AI news summaries in `update-news.yml`.
+- `ANTHROPIC_API_KEY` secret needed for AI news summaries.
 
 ## Hard rules
 

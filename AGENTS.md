@@ -28,7 +28,7 @@ Static site (`revfran/web-experiments`) on GitHub Pages. Pure HTML/CSS — no fr
 
 ## Workflow invariant
 
-Each data-update workflow (`update-news.yml`, `check-ing-plan.yml`) must stage **all** HTML pages and **both** data files. If one is missing, it gets wiped from the live site on the next deploy. `news-data.json` must be downloaded from the live Pages URL inside `check-ing-plan.yml` (it is gitignored).
+`update-daily.yml` is the single data workflow. It must stage **all** HTML pages and **both** data files. Both data steps run with `continue-on-error: true` so one failure does not block the deploy. If `news-data.json` is missing after the fetch step (step failed), the staging script downloads it from the live Pages URL as a fallback.
 
 ## PR workflow
 
