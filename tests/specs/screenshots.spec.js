@@ -103,8 +103,7 @@ test.describe('Page screenshots', () => {
 
   test('05-ing-plan', async ({ page }) => {
     await setupMocks(page);
-    const response = await page.goto('/ing.html');
-    test.skip(response?.status() === 404, 'ing.html not yet available (merge claude/ing-plan-widget first)');
+    await page.goto('/ing.html');
     await page.locator('.status-badge').waitFor({ state: 'visible', timeout: 10000 });
     await snap(page, '05-ing-plan');
   });
