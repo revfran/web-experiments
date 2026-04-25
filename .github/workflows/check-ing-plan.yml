@@ -1,0 +1,56 @@
+name: ING Plan Amigo Check
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'   # 7:00 AM UTC every Monday
+  workflow_dispatch:       # allow manual trigger from GitHub UI
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  check-and-deploy:
+    name: Check plan status & deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
+      - name: Check ING Plan Amigo status
+        run: node scripts/check-ing-plan.mjs
+
+      - uses: actions/configure-pages@v4
+
+      - name: Stage static files
+        run: |
+          mkdir -p _site
+          cp index.html weather.html map.html news.html ing.html style.css _site/
+          cp news-data.json ing-plan-data.json _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
